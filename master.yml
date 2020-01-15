@@ -5,7 +5,7 @@ jobs:
   include:
     - stage: build docker image
       script:
-        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+        - echo "$DOCKER_PASSWORD" | docker login --password-stdin --username= "$DOCKER_USERNAME" hkccr.ccs.tencentyun.com
         - docker build -t blog .
         - docker tag blog $DOCKER_USERNAME/hexo
-        - docker push $DOCKER_USERNAME/hexo
+        - docker push hkccr.ccs.tencentyun.com/image-hub/blog
