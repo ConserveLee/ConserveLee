@@ -9,4 +9,5 @@ branches:
 
 script:
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-  - docker build -t quanzhilong/hexo .
+  - docker build -t blog .
+  - docker tag blog $DOCKER_USERNAME/hexo

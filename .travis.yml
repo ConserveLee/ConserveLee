@@ -11,8 +11,10 @@ script:
   - export folder=$(pwd)
   - mkdir ../tmp && cd ../tmp
   - npm install hexo-cli -g
-  - hexo init blog && cd blog
-  - rm -rf source \
+  - hexo init blog
+  - cd blog \
+    && rm -rf _config.yml \
+    && rm -rf source \
     && rm -rf themes \
     && rm -rf $folder/node_modules
   - mv -f $folder/* .
