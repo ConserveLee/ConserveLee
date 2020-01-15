@@ -20,7 +20,6 @@ script:
     && rm -rf themes \
     && rm -rf $folder/node_modules
   - mv -f $folder/* .
-  -
   - npm install \
     && npm install hexo-helper-live2d --save \
     && npm install live2d-widget-model-koharu --save \
