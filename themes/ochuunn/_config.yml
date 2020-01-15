@@ -14,7 +14,7 @@ google_verification: false  # your token
 google_analytics: false     # your id
 
 # post comment
-comment_plugin: false # valine or livere
+comment_plugin: valine # valine or livere
 
 # mathjax
 mathjax: false # or true
