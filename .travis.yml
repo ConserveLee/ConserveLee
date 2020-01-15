@@ -25,6 +25,7 @@ script:
   - mv master.yml ./public/.travis.yml && cd public
 
 after_success:
+  - git init
   - git checkout -b gh
   - git config --local user.name "${U_NAME}"
   - git config --local user.email "${U_EMAIL}"
