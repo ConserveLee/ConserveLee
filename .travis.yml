@@ -22,7 +22,7 @@ script:
     && npm install hexo-renderer-pug --save
   - hexo g
   - rm -f .travis.yml
-  - mv master.yml ./public/.travis.yml && mv dockerfile ./ && cd public
+  - mv master.yml ./public/.travis.yml && cd public
 
 after_success:
   - git checkout -b gh
