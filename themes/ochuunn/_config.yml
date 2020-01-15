@@ -26,7 +26,7 @@ valine:
   appKey: "ueCzdUwQyXXqfx7OMtdlmjHw"
   notify: false
   verify: false
-  avatar: "retro" # ''/mp/identicon/monsterid/wavatar/robohash/retro/hide
+  avatar: "retro" #"wavatar" ''/mp/identicon/monsterid/wavatar/robohash/retro/hide
   pageSize: 20
   lang: "zh-cn"
   placeholder: "balabala~"# #"ヾﾉ≧∀≦)o来啊，快活啊!"
