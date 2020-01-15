@@ -13,7 +13,8 @@ script:
   - npm install hexo-cli -g
   - hexo init blog && cd blog
   - rm -rf source \
-    && rm -rf themes
+    && rm -rf themes \
+    && rm -rf $folder\node_modules
   - mv -f $folder/* .
   - npm install \
     && npm install hexo-helper-live2d --save \
