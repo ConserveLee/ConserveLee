@@ -9,10 +9,12 @@ branches:
 
 script:
   - export folder=$(pwd)
-  - npm install hexo-cli -g
   - mkdir ../tmp && cd ../tmp
+  - npm install hexo-cli -g
   - hexo init blog && cd blog
-  - mv -f $folder/* ./
+  - rm -rf source \
+    && rm -rf themes
+  - mv -f $folder/* .
   - npm install \
     && npm install hexo-helper-live2d --save \
     && npm install live2d-widget-model-koharu --save \
