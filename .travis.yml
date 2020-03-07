@@ -26,7 +26,8 @@ script:
     && npm install hexo-renderer-pug --save
   - hexo g
   - rm -f .travis.yml
-  - mv master.yml ./public/.travis.yml && mv Dockerfile ./public/ && mv .gitattributes ./public/ && cd public
+  - mv .gitattributes ./public/
+  - mv master.yml ./public/.travis.yml && mv Dockerfile ./public/ && cd public
 
 after_success:
   - git init
