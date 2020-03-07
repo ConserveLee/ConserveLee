@@ -29,6 +29,7 @@ script:
   - mv master.yml ./public/.travis.yml && mv Dockerfile ./public/ && cd public
 
 after_success:
+  - echo "*.html linguist-language=TypeScript" > .gitattributes
   - git init
   - git checkout -b gh
   - git config --local user.name "${U_NAME}"
