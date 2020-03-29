@@ -42,8 +42,8 @@ livere:
 
 # copyright
 start_year: 2018
-icp_text: ""
-icp_link: ""
+icp_text: "粤ICP备20015271号"
+icp_link: "http://beian.miit.gov.cn"
 
 # add your qr image
 reward_images:
