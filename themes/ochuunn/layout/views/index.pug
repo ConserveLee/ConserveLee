@@ -13,8 +13,10 @@ html.index(lang="zh-CN")
     != js('js/particles.min.js')
     != js('js/particles.oli.js')
 
+footer.foot
+      div.foot-copy
     include ../plugins/google.pug
-    if theme.icp_link
-              a(href=theme.icp_link, class="icp-a", target="view_window")
-                != theme.icp_text
+        if theme.icp_link
+            a(href=theme.icp_link, target="view_window")
+            != theme.icp_text
 //-     <a href="http://beian.miit.gov.cn">粤ICP备20015271号</a>
