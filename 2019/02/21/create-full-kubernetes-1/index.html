@@ -1,0 +1,131 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="author" content="lee"><link rel="alternative" href="/atom.xml" title="I'm lee" type="application/atom+xml"><link rel="icon" href="/favicon.png"><title>从零开始搭建一个完整的Kubernetes集群（一） - I'm lee</title>
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="/js/fancybox/jquery.fancybox.min.css">
+<!--[if lt IE 9]><script>(function(a,b){a="abbr article aside audio bdi canvas data datalist details dialog figcaption figure footer header hgroup main mark meter nav output progress section summary template time video".split(" ");for(b=a.length-1;b>=0;b--)document.createElement(a[b])})()</script><![endif]-->
+<script src="/js/jquery-3.1.1.min.js"></script>
+
+<script src="/js/fancybox/jquery.fancybox.min.js"></script>
+<meta name="generator" content="Hexo 4.2.0"></head><body style="opacity:0"><header class="head"><h1 class="head-title u-fl"><a href="/">I'm lee</a></h1><nav class="head-nav u-fr"><ul class="head-nav__list"><li class="head-nav__item"><a class="head-nav__link" href="/tags">标签</a></li><li class="head-nav__item"><a class="head-nav__link" href="/archives">目录</a></li><li class="head-nav__item"><a class="head-nav__link" href="/about">关于我</a></li></ul></nav></header><main class="main"><article class="post"><header class="post__head"><time class="post__time" datetime="2019-02-21T19:48:24.000Z">2019 - 02 - 21 19:48:24</time><h1 class="post__title"><a href="/2019/02/21/create-full-kubernetes-1/">从零开始搭建一个完整的Kubernetes集群（一）</a></h1><div class="post__main echo"><h1 id="从零开始搭建一个完整的-Kubernetes-集群（一-部署集群）"><a href="#从零开始搭建一个完整的-Kubernetes-集群（一-部署集群）" class="headerlink" title="从零开始搭建一个完整的 Kubernetes 集群（一 部署集群）"></a>从零开始搭建一个完整的 Kubernetes 集群（一 部署集群）</h1><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><h3 id="项目背景"><a href="#项目背景" class="headerlink" title="项目背景"></a>项目背景</h3><p>作为开发者，这几年我们见证了云计算时代的到来。而 kubernetes 在容器世界里，已然成为技术的事实标准，掌握 kubernetes 独有的编程范式和基础知识成为一件非常重要的事情。</p>
+<p>学习 kubernetes 是一个漫长的过程，但是在学习期间，我发现搭建一个 Kubernetes（K8S）尤其是完整的集群不是一件容易的事情，主要困难有几个：</p>
+<blockquote>
+<ul>
+<li>GFW</li>
+<li>Kubernetes 基本概念和知识，以及对工具使用的不熟悉</li>
+<li>网络上文档资料的过时，中文文档的缺乏，以及茫茫文档海里的不全面</li>
+<li>非 kubernetes 的知识点缺失，也就是分布式系统、网络、存储等方方面面的知识点缺失</li>
+</ul>
+</blockquote>
+<h3 id="初衷"><a href="#初衷" class="headerlink" title="初衷"></a>初衷</h3><p>之前一直使用 docker-compose 以及 dockerfile 编排 docker 容器。也部署了不少网站，因为一直感到种种不完善以及不灵活的地方，特别是涉及到CI。所以便开始重新采用新的 kubernetes 架构，直到目前重新部署完这个博客。</p>
+<p>鉴于这些天踩了不少坑，为了填坑，也为了自己查漏补缺，出于这些种种原因，写了这篇文章。希望对踌躇无措的人能有所帮助。</p>
+<blockquote>
+<p>这里所说的“完整”，指的是这个集群具备 Kubernetes 在 GitHub 上已经发布的所有功能，并能够接近生产环境的所有使用需求，而不是 Minikube 这种单节点的尝鲜版本。</p>
+</blockquote>
+<h2 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h2><h4 id="知识"><a href="#知识" class="headerlink" title="知识"></a><strong>知识</strong></h4><p>了解 kubernetes 的基本概念，比如 CLI（<a href="https://k8smeetup.github.io/docs/user-guide/kubectl/" target="_blank" rel="noopener">kubectl</a>）和资源（<a href="https://k8smeetup.github.io/docs/user-guide/pods" target="_blank" rel="noopener">pods</a>，<a href="https://k8smeetup.github.io/docs/user-guide/services" target="_blank" rel="noopener">services</a>等）。</p>
+<h4 id="环境"><a href="#环境" class="headerlink" title="环境"></a><strong>环境</strong></h4><p>我准备的环境如下</p>
+<p>若干个（2个或以上）2 核 CPU、 4 GB 内存的VPS服务器，我用的是腾讯云；</p>
+<p>机器之间网络互通，我用的是对等网络；</p>
+<p>每台服务器50G以上云硬盘，用于 dokcer 镜像和日志的存储；</p>
+<p>一块独立的若干大小数据盘，用于挂载PV；</p>
+<p>64位的 Ubuntu 18.04；</p>
+<p>便于使用，我全部采取 root 用户。ps，最好不要用Centos（用了你就知道那酸爽），Ubuntu 对 kubernetes的支持要相对好得多；</p>
+<p>修改默认 static hostname 为自定义（你喜欢的名字），比如 node0，node1，node2…；</p>
+<p>每台机器均能科学上网（至少 master 节点能访问），否则要装一大堆镜像源，等等；</p>
+<h2 id="开始部署"><a href="#开始部署" class="headerlink" title="开始部署"></a>开始部署</h2><h3 id="STEP-1-安装-kubeadm-和-Docker"><a href="#STEP-1-安装-kubeadm-和-Docker" class="headerlink" title="STEP 1 安装 kubeadm 和 Docker"></a>STEP 1 安装 kubeadm 和 Docker</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> cat &lt;&lt;EOF &gt; /etc/apt/sources.list.d/kubernetes.list</span></span><br><span class="line">deb http://apt.kubernetes.io/ kubernetes-xenial main</span><br><span class="line">EOF</span><br><span class="line"><span class="meta">$</span><span class="bash"> apt-get update</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> apt-get install -y docker.io kubeadm</span></span><br></pre></td></tr></table></figure>
+
+<p>直接使用 Ubuntu 的 docker.io 的安装源，因为 docker CE 和最新的 Kubernetes 可能会有兼容问题，和 Ubuntu 最新的发行版也可能会有这个问题。</p>
+<p>在上述安装 kubeadm 的过程中，kubeadm 和 kubelet、kubectl、kubernetes-cni 这几个二进制文件都会被自动安装好。</p>
+<h3 id="STEP-2-部署-Kubernetes-的-Master-节点"><a href="#STEP-2-部署-Kubernetes-的-Master-节点" class="headerlink" title="STEP 2 部署 Kubernetes 的 Master 节点"></a>STEP 2 部署 Kubernetes 的 Master 节点</h3><h3 id="kuberadm"><a href="#kuberadm" class="headerlink" title="kuberadm"></a>kuberadm</h3><p>kuberadm是一个HA级别（能用于生产环境）的独立部署工具，极大的节省了使用复杂的脚本、运维工具的成本。</p>
+<blockquote>
+<p>为了方便部署，我对 kuberadm 写了一份 yaml 文文件。并且所有需要用到的文件，都在<a href="https://github.com/ConserveLee/quick-kubernetes-deploy" target="_blank" rel="noopener">这里</a>可以找到。</p>
+</blockquote>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> git <span class="built_in">clone</span> https://github.com/ConserveLee/quick-kubernetes-deploy.git quick-k8s</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> <span class="built_in">cd</span> quick-k8s/kubernetes</span></span><br></pre></td></tr></table></figure>
+
+<p>修改 <your ip> 和 <your hostname> 为正确数据</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> kubeadm init --config kubeadm.yaml</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="ps"><a href="#ps" class="headerlink" title="ps"></a>ps</h3><h4 id="如果出错，请使用"><a href="#如果出错，请使用" class="headerlink" title="如果出错，请使用"></a>如果出错，请使用</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> kubeadm reset</span></span><br></pre></td></tr></table></figure>
+
+<p>或者</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> kubectl reset -f</span></span><br></pre></td></tr></table></figure>
+
+<p>进行重置</p>
+<p>之后的过程出错，可以使用</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> kubectl delet -f &lt;FileName&gt;.yaml</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="好了继续"><a href="#好了继续" class="headerlink" title="好了继续"></a>好了继续</h4><p>如果没有问题，现在已经完成 Kubernetes Master 的部署了，kubeadm会提示 kubeadm join 命令，用于给这个 Master 节点添加更多worker节点。</p>
+<p>在后面部署 Worker 节点的时候马上会用到，所以请记录下来。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubeadm join &lt;master IP&gt;:6443 --token 5n9s47.cmo7gunvt95ingh2 --discovery-token-ca-cert-hash sha256:d3321b231e55706a9283fffcb99e8c9491f1cda0e8a8bc8893f03731c95952db</span><br></pre></td></tr></table></figure>
+
+<p>此外，kubeadm 还会提示我们第一次使用 Kubernetes 集群所需要的配置命令：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> mkdir -p <span class="variable">$HOME</span>/.kube</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo cp -i /etc/kubernetes/admin.conf <span class="variable">$HOME</span>/.kube/config</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> sudo chown $(id -u):$(id -g) <span class="variable">$HOME</span>/.kube/config</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="STEP-3-部署网络插件"><a href="#STEP-3-部署网络插件" class="headerlink" title="STEP 3 部署网络插件"></a>STEP 3 部署网络插件</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> kubectl get nodes</span></span><br><span class="line">...</span><br><span class="line"><span class="meta">$</span><span class="bash"> kubectl describe node &lt;node name&gt;</span></span><br><span class="line">...</span><br><span class="line">Conditions:</span><br><span class="line">...</span><br><span class="line">Ready   False ... KubeletNotReady  runtime network not ready: NetworkReady=false reason:NetworkPluginNotReady message:docker: network plugin is not ready: cni config uninitialized</span><br></pre></td></tr></table></figure>
+
+<p>这里是因为未部署任何网络插件，接下来部署weave</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f weave-daemonset.yaml</span><br><span class="line">kubectl get pods -n kube-system</span><br></pre></td></tr></table></figure>
+
+<p>可以看到所有的系统 Pod 都成功启动了。</p>
+<h3 id="STEP-4-部署worker节点"><a href="#STEP-4-部署worker节点" class="headerlink" title="STEP 4 部署worker节点"></a>STEP 4 部署worker节点</h3><p>在其余所有服务器执行 <strong>STEP 2</strong> 保存的join命令</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> kubeadm join &lt;master IP&gt;:6443 --token 5n9s47.cmo7gunvt95ingh2 --discovery-token-ca-cert-hash sha256:d3321b231e55706a9283fffcb99e8c9491f1cda0e8a8bc8893f03731c95952db</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="STEP-5-通过-Taint-Toleration-调整-Master-节点"><a href="#STEP-5-通过-Taint-Toleration-调整-Master-节点" class="headerlink" title="STEP 5 通过 Taint/Toleration 调整 Master 节点"></a>STEP 5 通过 Taint/Toleration 调整 Master 节点</h3><p>Taint/Toleration 机制允许 Master 节点 运行用户 Pod （默认是不允许的）</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> kubectl taint node &lt;master node name&gt; foo=bar:NoSchedule</span></span><br></pre></td></tr></table></figure>
+
+<p>如果你就是想要一个单节点的 Kubernetes，删除这个 Taint 才是正确的选择：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> kubectl taint nodes --all node-role.kubernetes.io/master-</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="STEP-6-部署-Dashboard-可视化插件"><a href="#STEP-6-部署-Dashboard-可视化插件" class="headerlink" title="STEP 6 部署 Dashboard 可视化插件"></a>STEP 6 部署 Dashboard 可视化插件</h3><p>Dashboard 是官方的一个可视化工具，可以给用户提供一个可视化的 Web UI 界面来查看当前集群的各种信息</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> kubectl apply -f dashboard.yaml</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 查看 admin-user的token</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep admin-user | awk <span class="string">'&#123;print $1&#125;'</span>)</span></span><br></pre></td></tr></table></figure>
+
+<p>记录出现的token</p>
+<p>使用firefox访问https://<YourIP>:30000/#!/login，选择令牌登陆，输入记录的token，即可访问dashboard</p>
+<p><img src="/assets/kubernetes/dashboard.jpeg" alt="image-20190221230431143"></p>
+<h3 id="STEP-7-故障排除"><a href="#STEP-7-故障排除" class="headerlink" title="STEP 7 故障排除"></a>STEP 7 故障排除</h3><p>到这一步，检查之前的步骤是否有出错</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 查看所有基本类型资源</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> kuberctl get all --all-namespeaces</span></span><br></pre></td></tr></table></figure>
+
+<p>如果有异常的资源</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 查看单个资源</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> kuberctl describe &lt;<span class="built_in">type</span>&gt; &lt;name&gt; -n &lt;namespace&gt;</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 查看单个yaml</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> kuberctl get -o yaml &lt;<span class="built_in">type</span>&gt; &lt;name&gt; -n &lt;namespace&gt;</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 查看pod日志</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> kubectl logs --tail=20 &lt;name&gt; -n &lt;namespace&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>逐一排查，这里不一一细说</p>
+<h3 id="STEP-8-布置ETCD集群"><a href="#STEP-8-布置ETCD集群" class="headerlink" title="STEP 8 布置ETCD集群"></a>STEP 8 布置ETCD集群</h3><p>kubeadm 安装的集群，默认 etcd 是一个单机的容器化的 etcd，并且 kubernetes 和 etcd 通信没有经过ssl加密和认证，这是可以改的。</p>
+<p>（可选）例如部署一个三节点的etcd集群，二进制部署，systemd守护进程，并且需要生成ca证书。</p>
+<h3 id="STEP-9-部署完成"><a href="#STEP-9-部署完成" class="headerlink" title="STEP 9 部署完成"></a>STEP 9 部署完成</h3><p>重复 <strong>STEP 7</strong> ，直到全部running则表示集群正常。至此，我们的 kubernetes 集群所有基本资源宣告搭建成功了。</p>
+<p>章节：</p>
+<ul>
+<li><a href="/2019/02/21/create-full-kubernetes-1/">从零开始搭建一个完整的 Kubernetes 集群（一 部署集群）</a></li>
+<li><a href="/2019/02/22/create-full-kubernetes-2/">从零开始搭建一个完整的 Kubernetes 集群（二 持续化存储）</a></li>
+<li><a href="">从零开始搭建一个完整的 Kubernetes 集群（三 helm）</a></li>
+<li><a href="">从零开始搭建一个完整的 Kubernetes 集群（四 ingress以及nginx）</a></li>
+</ul>
+<h4 id="github地址"><a href="#github地址" class="headerlink" title="**github地址 **"></a>**<a href="https://github.com/ConserveLee/quick-kubernetes-deploy" target="_blank" rel="noopener">github地址</a> **</h4><h4 id="如果对你有帮助，记得-fork-和-star，-欢迎留言"><a href="#如果对你有帮助，记得-fork-和-star，-欢迎留言" class="headerlink" title="如果对你有帮助，记得 fork 和 star， 欢迎留言"></a><strong>如果对你有帮助，记得 fork 和 star， 欢迎留言</strong></h4></div></header><footer class="post__foot u-cf"><ul class="post__tag u-fl"><li class="post__tag__item"><a class="post__tag__link" href="/tags/develop/">develop</a></li><li class="post__tag__item"><a class="post__tag__link" href="/tags/kubernetes/">kubernetes</a></li><li class="post__tag__item"><a class="post__tag__link" href="/tags/kubeadm/">kubeadm</a></li><li class="post__tag__item"><a class="post__tag__link" href="/tags/dashboard/">dashboard</a></li></ul></footer></article><section class="reward"><a class="btn-reward" href="#">打赏</a><div class="reward-wrapper clearfix"><img src="/img/wechat.jpg" title="微信"></div></section><div class="comments" id="v-container"><script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src="/js/Valine.min.js"></script>
+<script>new Valine({
+  av: AV,
+  el: '#v-container',
+  app_id: 'Rd0PToFAcsyXLCHl8fqyBeJI-gzGzoHsz',
+  app_key: 'ueCzdUwQyXXqfx7OMtdlmjHw',
+  avatar: 'wavatar',
+  avatarForce: false,
+  notify: false,
+  verify: false,
+  lang: 'zh-cn',
+  placeholder: 'ヾﾉ≧∀≦)o来啊，快活啊!',
+  pageSize: 20,
+  visitor: true,
+  highlight: true,
+  emoticon_url: '/img/alu',
+  emoticon_list: ["吐.png","喷血.png","狂汗.png","不说话.png","汗.png","坐等.png","献花.png","不高兴.png","中刀.png","害羞.png","皱眉.png","小眼睛.png","中指.png","尴尬.png","瞅你.png","想一想.png","中枪.png","得意.png","肿包.png","扇耳光.png","亲亲.png","惊喜.png","脸红.png","无所谓.png","便便.png","愤怒.png","蜡烛.png","献黄瓜.png","内伤.png","投降.png","观察.png","看不见.png","击掌.png","抠鼻.png","邪恶.png","看热闹.png","口水.png","抽烟.png","锁眉.png","装大款.png","吐舌.png","无奈.png","长草.png","赞一个.png","呲牙.png","无语.png","阴暗.png","不出所料.png","咽气.png","期待.png","高兴.png","吐血倒地.png","哭泣.png","欢呼.png","黑线.png","喜极而泣.png","喷水.png","深思.png","鼓掌.png","暗地观察.png"],
+});</script></div></main><footer class="foot"><div class="foot-copy">&copy; 2018 - 2020 lee<a class="icp-a" href="http://beian.miit.gov.cn" target="view_window">粤ICP备20015271号</a></div></footer>
+<script src="/js/scroller.js"></script>
+
+<script src="/js/main.js"></script>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"right","width":205,"height":410},"mobile":{"show":true},"log":false,"pluginJsPath":"lib/","pluginRootPath":"live2dw/","tagMode":false});</script></body></html>

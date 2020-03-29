@@ -1,0 +1,10 @@
+sudo: true
+language: minimal
+
+jobs:
+  include:
+    - stage: build docker image
+      script:
+        - echo "$DOCKER_PASSWORD" | docker login --password-stdin --username="$DOCKER_USERNAME" hkccr.ccs.tencentyun.com
+        - docker build -t hkccr.ccs.tencentyun.com/image-hub/blog .
+        - docker push hkccr.ccs.tencentyun.com/image-hub/blog

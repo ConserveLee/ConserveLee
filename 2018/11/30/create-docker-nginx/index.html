@@ -1,0 +1,124 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="author" content="lee"><link rel="alternative" href="/atom.xml" title="I'm lee" type="application/atom+xml"><link rel="icon" href="/favicon.png"><title>使用laradock在一台服务器部署多个Web Server - I'm lee</title>
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="/js/fancybox/jquery.fancybox.min.css">
+<!--[if lt IE 9]><script>(function(a,b){a="abbr article aside audio bdi canvas data datalist details dialog figcaption figure footer header hgroup main mark meter nav output progress section summary template time video".split(" ");for(b=a.length-1;b>=0;b--)document.createElement(a[b])})()</script><![endif]-->
+<script src="/js/jquery-3.1.1.min.js"></script>
+
+<script src="/js/fancybox/jquery.fancybox.min.js"></script>
+<meta name="generator" content="Hexo 4.2.0"></head><body style="opacity:0"><header class="head"><h1 class="head-title u-fl"><a href="/">I'm lee</a></h1><nav class="head-nav u-fr"><ul class="head-nav__list"><li class="head-nav__item"><a class="head-nav__link" href="/tags">标签</a></li><li class="head-nav__item"><a class="head-nav__link" href="/archives">目录</a></li><li class="head-nav__item"><a class="head-nav__link" href="/about">关于我</a></li></ul></nav></header><main class="main"><article class="post"><header class="post__head"><time class="post__time" datetime="2018-11-30T19:06:47.000Z">2018 - 11 - 30 19:06:47</time><h1 class="post__title"><a href="/2018/11/30/create-docker-nginx/">使用laradock在一台服务器部署多个Web Server</a></h1><div class="post__main echo"><h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><h3 id="为什么使用docker？"><a href="#为什么使用docker？" class="headerlink" title="为什么使用docker？"></a>为什么使用docker？</h3><p>部署快 性能好</p>
+<h3 id="安全性高"><a href="#安全性高" class="headerlink" title="安全性高"></a>安全性高</h3><p>容器与宿主机完全隔离，默认情况下不能相互访问。</p>
+<h3 id="同时支持多版本软件"><a href="#同时支持多版本软件" class="headerlink" title="同时支持多版本软件"></a>同时支持多版本软件</h3><p>可以支持多版本PHP、Node等环境共存</p>
+<h1 id="目的："><a href="#目的：" class="headerlink" title="目的："></a>目的：</h1><h2 id="搭建laravel和node环境，部署多个web-server并上线"><a href="#搭建laravel和node环境，部署多个web-server并上线" class="headerlink" title="搭建laravel和node环境，部署多个web server并上线"></a>搭建laravel和node环境，部署多个web server并上线</h2><p>话不多说，直接上步骤。</p>
+<h3 id="STEP-1-安装docker"><a href="#STEP-1-安装docker" class="headerlink" title="STEP 1 安装docker"></a>STEP 1 安装docker</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">curl -sSL https:&#x2F;&#x2F;get.daocloud.io&#x2F;docker | sh</span><br><span class="line">## 安装docker</span><br></pre></td></tr></table></figure>
+
+<p>Centos7 请执行这步</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install -y docker-engine</span><br></pre></td></tr></table></figure>
+
+<p>ubuntu 请执行这步​                   </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install -y -q docker-engine</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="STEP-2-安装docker-compose-（ubuntu-请注意权限问题）"><a href="#STEP-2-安装docker-compose-（ubuntu-请注意权限问题）" class="headerlink" title="STEP 2 安装docker-compose （ubuntu 请注意权限问题）"></a>STEP 2 安装docker-compose （ubuntu 请注意权限问题）</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">curl -L https:&#x2F;&#x2F;get.daocloud.io&#x2F;docker&#x2F;compose&#x2F;releases&#x2F;download&#x2F;1.13.0&#x2F;docker-compose-&#96;uname -s&#96;-&#96;uname -m&#96; &gt; &#x2F;usr&#x2F;local&#x2F;bin&#x2F;docker-compose</span><br><span class="line">chmod +x &#x2F;usr&#x2F;local&#x2F;bin&#x2F;docker-compose</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="STEP-3-下载laradock"><a href="#STEP-3-下载laradock" class="headerlink" title="STEP 3 下载laradock"></a>STEP 3 下载laradock</h3><p>请确保git 可用</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">git clone https:&#x2F;&#x2F;github.com&#x2F;Laradock&#x2F;laradock.git</span><br><span class="line">mkdir -p wwwroot&#x2F;data  # 创建网站目录</span><br><span class="line">cd laradock</span><br><span class="line">cp env-example .env</span><br><span class="line">vi .env</span><br></pre></td></tr></table></figure>
+
+<h4 id="env-配置说明"><a href="#env-配置说明" class="headerlink" title=".env 配置说明"></a>.env 配置说明</h4><p>APP_CODE_PATH_HOST=../wwwroot</p>
+<p>DATA_PATH_HOST=../wwwroot/data</p>
+<h4 id="WORKSPACE-配置项"><a href="#WORKSPACE-配置项" class="headerlink" title="WORKSPACE 配置项"></a>WORKSPACE 配置项</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">NODE&#x3D;true</span><br><span class="line">YARN&#x3D;true</span><br></pre></td></tr></table></figure>
+
+<h4 id="PHP-FPM配置说明"><a href="#PHP-FPM配置说明" class="headerlink" title="PHP_FPM配置说明"></a>PHP_FPM配置说明</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">PHP_FPM_INSTALL_XDEBUG&#x3D;false</span><br><span class="line">PHP_FPM_INSTALL_MONGO&#x3D;false</span><br><span class="line">PHP_FPM_INSTALL_MSSQL&#x3D;false</span><br><span class="line">PHP_FPM_INSTALL_SOAP&#x3D;false</span><br><span class="line">PHP_FPM_INSTALL_ZIP_ARCHIVE&#x3D;true</span><br><span class="line">PHP_FPM_INSTALL_BCMATH&#x3D;true</span><br><span class="line">PHP_FPM_INSTALL_PHPREDIS&#x3D;true</span><br><span class="line">PHP_FPM_INSTALL_MEMCACHED&#x3D;false</span><br><span class="line">PHP_FPM_INSTALL_OPCACHE&#x3D;false</span><br><span class="line">PHP_FPM_INSTALL_EXIF&#x3D;true</span><br><span class="line">PHP_FPM_INSTALL_AEROSPIKE&#x3D;false</span><br><span class="line">PHP_FPM_INSTALL_MYSQLI&#x3D;false</span><br><span class="line">PHP_FPM_INSTALL_TOKENIZER&#x3D;false</span><br><span class="line">PHP_FPM_INSTALL_INTL&#x3D;false</span><br><span class="line">PHP_FPM_INSTALL_GHOSTSCRIPT&#x3D;false</span><br><span class="line">PHP_FPM_INSTALL_LDAP&#x3D;false</span><br><span class="line">PHP_FPM_INSTALL_SWOOLE&#x3D;false</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="STEP-4-修改dns以及端口"><a href="#STEP-4-修改dns以及端口" class="headerlink" title="STEP 4 修改dns以及端口"></a>STEP 4 修改dns以及端口</h3><p>因为node的原因，没法全挂在80端口上。所以每个项目使用一个端口，再用 Nginx  配置了一个多服务结构，根据访问域名转发请求，达到通过不同的域名来访问不同的Web Server的效果。</p>
+<blockquote>
+<p>example structure</p>
+</blockquote>
+<p><img src="/assets/docker-nginx/%E5%A4%A7%E6%A6%82%E6%B5%81%E7%A8%8B,%E7%BD%91%E4%B8%8A%E6%8A%84%E7%9A%84.png" alt="大概流程,网上抄的"></p>
+<p>去域名管理商那里分配你的域名，当然都是 A 记录并全部解析到你的 云主机公网 IP 上。</p>
+<p>另外一个准备就是修改你所有的 Web Server 的端口，可以按你的爱好设置，但是不要占用 80 以及 443 端口</p>
+<h3 id="STEP-5-新建forward-conf"><a href="#STEP-5-新建forward-conf" class="headerlink" title="STEP 5 新建forward.conf"></a>STEP 5 新建forward.conf</h3><p>切换到你的<strong>nginx 配置目录</strong></p>
+<blockquote>
+<p>cd nginx/sites</p>
+</blockquote>
+<p>这里要说明 nginx 是拥有 Include 机制的，他会自动加载 sites 目录下的所有 _.conf_（默认配置下）  ，所以我们并不需要修改 nginx.conf 文件。我们接下来需要在 sites 目录下创建一系列的配置文件，文件名请使用你相应的工程名</p>
+<p><strong>example:  yourname.conf</strong></p>
+<p>让我们编写详细的转发规则</p>
+<p><strong>新建一份forward.conf</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 假设我已经将这个服务的端口改成了5000端口</span><br><span class="line">&#x2F;&#x2F; 当nginx捕获到访问域名为lees.work的时候</span><br><span class="line">&#x2F;&#x2F; 就会转发到本地的5000端口</span><br><span class="line">server&#123;</span><br><span class="line">    listen 80;</span><br><span class="line">    listen [::]:80;</span><br><span class="line"></span><br><span class="line">    # For https</span><br><span class="line">    # listen 443 ssl;</span><br><span class="line">    # listen [::]:443 ssl ipv6only&#x3D;on;</span><br><span class="line">    # ssl_certificate &#x2F;etc&#x2F;nginx&#x2F;ssl&#x2F;default.crt;</span><br><span class="line">    # ssl_certificate_key &#x2F;etc&#x2F;nginx&#x2F;ssl&#x2F;default.key;</span><br><span class="line"></span><br><span class="line">    server_name lees.work www.lees.work;</span><br><span class="line">    location &#x2F; &#123;</span><br><span class="line">        # proxy_http_version 1.1;</span><br><span class="line">        proxy_set_header Connection &quot;&quot;;</span><br><span class="line">        proxy_set_header X-Real-IP $remote_addr;</span><br><span class="line">        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;</span><br><span class="line">        proxy_set_header Host $http_host;</span><br><span class="line">        proxy_set_header X-NginX-Proxy true;</span><br><span class="line">        proxy_pass http:&#x2F;&#x2F;127.0.0.1:5000$request_uri;</span><br><span class="line">        proxy_redirect off;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果你需要转发 HTTPS，请复制一份上面的内容粘贴到下面，修改监听端口为 443，转发端口就是你监听的 https 端口！</p>
+<h3 id="STEP-6-修改yourname-conf"><a href="#STEP-6-修改yourname-conf" class="headerlink" title="STEP 6 修改yourname.conf"></a>STEP 6 修改yourname.conf</h3><p><strong>新建一份yourname.conf然后修改成</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line">server &#123;</span><br><span class="line"></span><br><span class="line">    listen 5000;</span><br><span class="line">    listen [::]:5000;</span><br><span class="line"></span><br><span class="line">    # For https</span><br><span class="line">    # listen 443 ssl;</span><br><span class="line">    # listen [::]:443 ssl ipv6only&#x3D;on;</span><br><span class="line">    # ssl_certificate &#x2F;etc&#x2F;nginx&#x2F;ssl&#x2F;default.crt;</span><br><span class="line">    # ssl_certificate_key &#x2F;etc&#x2F;nginx&#x2F;ssl&#x2F;default.key;</span><br><span class="line"></span><br><span class="line">    server_name localhost:5000;</span><br><span class="line">    root &#x2F;var&#x2F;www&#x2F;yourname(你的项目目录名)&#x2F;public;</span><br><span class="line">    index index.php index.html index.htm;</span><br><span class="line"></span><br><span class="line">    location &#x2F; &#123;</span><br><span class="line">         try_files $uri $uri&#x2F; &#x2F;index.php$is_args$args;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    location ~ \.php$ &#123;</span><br><span class="line">        try_files $uri &#x2F;index.php &#x3D;404;</span><br><span class="line">        fastcgi_pass php-upstream;</span><br><span class="line">        fastcgi_index index.php;</span><br><span class="line">        fastcgi_buffers 16 16k;</span><br><span class="line">        fastcgi_buffer_size 32k;</span><br><span class="line">        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;</span><br><span class="line">        #fixes timeouts</span><br><span class="line">        fastcgi_read_timeout 600;</span><br><span class="line">        include fastcgi_params;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    location ~ &#x2F;\.ht &#123;</span><br><span class="line">        deny all;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    location &#x2F;.well-known&#x2F;acme-challenge&#x2F; &#123;</span><br><span class="line">        root &#x2F;var&#x2F;www&#x2F;letsencrypt&#x2F;;</span><br><span class="line">        log_not_found off;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    error_log &#x2F;var&#x2F;log&#x2F;nginx&#x2F;laravel_error.log;</span><br><span class="line">    access_log &#x2F;var&#x2F;log&#x2F;nginx&#x2F;laravel_access.log;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>TIPS:一个坑</p>
+</blockquote>
+<p>laradock下docker-compose运行nginx 和 FPM 的默认启动用户都是 1000,所以你的网站根目录请务必修改所属者为 1000，否则laravel会出现权限问题！</p>
+<h3 id="STEP-7-Repeat"><a href="#STEP-7-Repeat" class="headerlink" title="STEP 7 Repeat"></a>STEP 7 Repeat</h3><p>重复 6 7 步骤，创建所有你需要的项目配置</p>
+<h3 id="STEP-8-修改dockerfile、docker-composer-yml、-env"><a href="#STEP-8-修改dockerfile、docker-composer-yml、-env" class="headerlink" title="STEP 8 修改dockerfile、docker-composer.yml、.env"></a>STEP 8 修改dockerfile、docker-composer.yml、.env</h3><blockquote>
+<p>cd ..</p>
+<p>vi  dockerfile</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">EXPOSE 80 443 5000</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>cd ..</p>
+<p>vi  docker-compose.yml</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">### NGINX Server #########################################</span><br><span class="line">ports:</span><br><span class="line">        - &quot;$&#123;NGINX_HOST_新端口名_PORT&#125;:5000&quot;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>vi  .env</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">### NGINX #################################################</span><br><span class="line">NGINX_HOST_新端口名_PORT&#x3D;5000</span><br><span class="line"></span><br><span class="line">最后添加</span><br><span class="line">DB_HOST&#x3D;mysql</span><br><span class="line">REDIS_HOST&#x3D;redis</span><br><span class="line">QUEUE_HOST&#x3D;beanstalkd</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="STEP-9-启动-nginx-redis-mysql"><a href="#STEP-9-启动-nginx-redis-mysql" class="headerlink" title="STEP 9 启动 nginx redis mysql"></a>STEP 9 启动 nginx redis mysql</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker-compose up -d --build nginx redis mysql</span><br></pre></td></tr></table></figure>
+
+<p>如果出现报错，仔细查看信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker-compose logs nginx</span><br></pre></td></tr></table></figure>
+
+<p>一般都是因为配置文件格式错误。</p>
+<p>只重启nginx（比如修改了配置文件）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker-compose restart nginx</span><br></pre></td></tr></table></figure>
+
+<p>可以根据自己需要自行启动 nginx/apache/mysql/phpmyadmin/redis 等   </p>
+<h3 id="STEP-10-工作空间"><a href="#STEP-10-工作空间" class="headerlink" title="STEP 10 工作空间"></a>STEP 10 工作空间</h3><p>进入工作空间前，请确认环境已经启动     ​                </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">docker-compose exec workspace bash</span><br><span class="line">composer global require &quot;laravel&#x2F;installer&quot;</span><br><span class="line">laravel new yourname</span><br><span class="line">...</span><br><span class="line">#修改你的lavavel配置、连接数据库、新建hexo项目、新建vue项目等</span><br></pre></td></tr></table></figure>
+
+<h4 id="需要注意的是："><a href="#需要注意的是：" class="headerlink" title="需要注意的是："></a>需要注意的是：</h4><p>由于数据库的数据是映射到 <code>wwwroot/data</code> 目录，    </p>
+<p>所以在<code>.env</code> 修改数据库密码，即使重新构建也无效。 </p>
+<p>如需强制更改 请删除<code>wwwroot/data</code> 里面对应数据库的数据。</p>
+<p>日常修改密码，请使用<code>bash</code> 或者 <code>phpmyadmin</code></p>
+<h3 id="STEP-11-运行网页"><a href="#STEP-11-运行网页" class="headerlink" title="STEP 11 运行网页"></a>STEP 11 运行网页</h3><p>打开你的网站吧，应该可以正常运行了！以后新增 Server 其实也只要增加一个对应的 conf 文件,可以很方便的横向扩展，并且整个网站访问起来也会比较美观！</p>
+<p>example:<a href="http://lees.work" target="_blank" rel="noopener">http://lees.work</a></p>
+</div></header><footer class="post__foot u-cf"><ul class="post__tag u-fl"><li class="post__tag__item"><a class="post__tag__link" href="/tags/develop/">develop</a></li><li class="post__tag__item"><a class="post__tag__link" href="/tags/docker/">docker</a></li><li class="post__tag__item"><a class="post__tag__link" href="/tags/laradock/">laradock</a></li><li class="post__tag__item"><a class="post__tag__link" href="/tags/nginx/">nginx</a></li><li class="post__tag__item"><a class="post__tag__link" href="/tags/laraval/">laraval</a></li></ul></footer></article><section class="reward"><a class="btn-reward" href="#">打赏</a><div class="reward-wrapper clearfix"><img src="/img/wechat.jpg" title="微信"></div></section><div class="comments" id="v-container"><script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src="/js/Valine.min.js"></script>
+<script>new Valine({
+  av: AV,
+  el: '#v-container',
+  app_id: 'Rd0PToFAcsyXLCHl8fqyBeJI-gzGzoHsz',
+  app_key: 'ueCzdUwQyXXqfx7OMtdlmjHw',
+  avatar: 'wavatar',
+  avatarForce: false,
+  notify: false,
+  verify: false,
+  lang: 'zh-cn',
+  placeholder: 'ヾﾉ≧∀≦)o来啊，快活啊!',
+  pageSize: 20,
+  visitor: true,
+  highlight: true,
+  emoticon_url: '/img/alu',
+  emoticon_list: ["吐.png","喷血.png","狂汗.png","不说话.png","汗.png","坐等.png","献花.png","不高兴.png","中刀.png","害羞.png","皱眉.png","小眼睛.png","中指.png","尴尬.png","瞅你.png","想一想.png","中枪.png","得意.png","肿包.png","扇耳光.png","亲亲.png","惊喜.png","脸红.png","无所谓.png","便便.png","愤怒.png","蜡烛.png","献黄瓜.png","内伤.png","投降.png","观察.png","看不见.png","击掌.png","抠鼻.png","邪恶.png","看热闹.png","口水.png","抽烟.png","锁眉.png","装大款.png","吐舌.png","无奈.png","长草.png","赞一个.png","呲牙.png","无语.png","阴暗.png","不出所料.png","咽气.png","期待.png","高兴.png","吐血倒地.png","哭泣.png","欢呼.png","黑线.png","喜极而泣.png","喷水.png","深思.png","鼓掌.png","暗地观察.png"],
+});</script></div></main><footer class="foot"><div class="foot-copy">&copy; 2018 - 2020 lee<a class="icp-a" href="http://beian.miit.gov.cn" target="view_window">粤ICP备20015271号</a></div></footer>
+<script src="/js/scroller.js"></script>
+
+<script src="/js/main.js"></script>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"right","width":205,"height":410},"mobile":{"show":true},"log":false,"pluginJsPath":"lib/","pluginRootPath":"live2dw/","tagMode":false});</script></body></html>
