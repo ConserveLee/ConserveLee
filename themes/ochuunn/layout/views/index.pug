@@ -14,4 +14,7 @@ html.index(lang="zh-CN")
     != js('js/particles.oli.js')
 
     include ../plugins/google.pug
-    <a href="http://beian.miit.gov.cn">粤ICP备20015271号</a>
+    if theme.icp_link
+              a(href=theme.icp_link, class="icp-a", target="view_window")
+                != theme.icp_text
+//-     <a href="http://beian.miit.gov.cn">粤ICP备20015271号</a>
