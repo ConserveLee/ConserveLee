@@ -11,8 +11,8 @@ html.index(lang="zh-CN")
         include nav.pug
     div.foot-copy
       if theme.icp_link
-         a(href=theme.icp_link, target="view_window")
-         != theme.icp_text
+        a(href=theme.icp_link, class="icp-a", target="view_window")
+          != theme.icp_text
 
     != js('js/particles.min.js')
     != js('js/particles.oli.js')
