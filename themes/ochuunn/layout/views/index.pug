@@ -12,12 +12,11 @@ html.index(lang="zh-CN")
 
     != js('js/particles.min.js')
     != js('js/particles.oli.js')
-    != js('js/main')
 
     include ../plugins/google.pug
 
 #particles-oli-wrapper.hide
 if theme.icp_link
-        a(href=theme.icp_link, class="icp-a", target="view_window")
+        a(href=theme.icp_link, target="view_window")
           != theme.icp_text
 //-     <a href="http://beian.miit.gov.cn">粤ICP备20015271号</a>
