@@ -9,6 +9,7 @@ html.index(lang="zh-CN")
         h1.head-title.u-fl
           = config.title
         include nav.pug
+    #particles-oli-wrapper.hide
     div.foot-copy
       if theme.icp_link
         a(href=theme.icp_link, class="icp-a", target="view_window")
@@ -16,6 +17,7 @@ html.index(lang="zh-CN")
 
     != js('js/particles.min.js')
     != js('js/particles.oli.js')
+    != js('js/main')
 
     include ../plugins/google.pug
 
