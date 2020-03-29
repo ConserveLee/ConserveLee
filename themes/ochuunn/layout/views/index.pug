@@ -9,11 +9,6 @@ html.index(lang="zh-CN")
         h1.head-title.u-fl
           = config.title
         include nav.pug
-    #particles-oli-wrapper.hide
-    div.foot-copy
-      if theme.icp_link
-        a(href=theme.icp_link, class="icp-a", target="view_window")
-          != theme.icp_text
 
     != js('js/particles.min.js')
     != js('js/particles.oli.js')
@@ -21,4 +16,8 @@ html.index(lang="zh-CN")
 
     include ../plugins/google.pug
 
+#particles-oli-wrapper.hide
+if theme.icp_link
+        a(href=theme.icp_link, class="icp-a", target="view_window")
+          != theme.icp_text
 //-     <a href="http://beian.miit.gov.cn">粤ICP备20015271号</a>
