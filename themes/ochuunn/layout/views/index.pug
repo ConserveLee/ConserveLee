@@ -1,6 +1,10 @@
 doctype html
 html.index(lang="zh-CN")
   head
+    style(type='text/css').
+     .icp_link {
+          z-index: 10;
+      }
     include head.pug
   body
     #particles-oli-wrapper.hide
@@ -17,6 +21,6 @@ html.index(lang="zh-CN")
 
 #particles-oli-wrapper.hide
 if theme.icp_link
-        a(href=theme.icp_link, target="view_window")
+        a(href=theme.icp_link, class="icp_link", target="view_window")
           != theme.icp_text
 //-     <a href="http://beian.miit.gov.cn">粤ICP备20015271号</a>
